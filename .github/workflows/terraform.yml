@@ -32,7 +32,7 @@ jobs:
       - run: terraform fmt -recursive -check -diff
       - run: terraform init -backend=false -input=false
       - run: terraform validate
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: terraform-linters/setup-tflint@v6
       - run: tflint --init && tflint --recursive
         env:
           GITHUB_TOKEN: ${{ github.token }}
