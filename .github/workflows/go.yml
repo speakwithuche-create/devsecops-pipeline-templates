@@ -1,0 +1,45 @@
+# Reusable Go pipeline: format, vet, race-detector tests with a coverage
+# floor, and a known-vulnerability scan of the dependency graph.
+name: go
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        default: "."
+      coverage-threshold:
+        description: Minimum total statement coverage (percent)
+        type: number
+        default: 70
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ inputs.working-directory }}/go.mod
+          cache-dependency-path: ${{ inputs.working-directory }}/go.sum
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; echo "::error::files need gofmt"; exit 1; }
+      - name: go vet
+        run: go vet ./...
+      - name: Tests (race detector)
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Coverage floor
+        env:
+          THRESHOLD: ${{ inputs.coverage-threshold }}
+        run: |
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {sub("%","",$3); print $3}')
+          echo "Total coverage: ${total}% (floor ${THRESHOLD}%)" | tee -a "$GITHUB_STEP_SUMMARY"
+          awk -v t="$total" -v min="$THRESHOLD" 'BEGIN { exit !(t >= min) }' || { echo "::error::coverage ${total}% is below ${THRESHOLD}%"; exit 1; }
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

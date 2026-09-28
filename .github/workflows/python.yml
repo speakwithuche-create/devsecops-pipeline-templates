@@ -1,0 +1,51 @@
+# Reusable Python pipeline: lint (with Bandit security rules via ruff),
+# tests with a coverage floor, and a dependency vulnerability audit.
+name: python
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        default: "."
+      python-version:
+        type: string
+        default: "3.12"
+      requirements:
+        description: Requirements file to install and audit
+        type: string
+        default: requirements.txt
+      coverage-threshold:
+        type: number
+        default: 70
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+          cache-dependency-path: ${{ inputs.working-directory }}/${{ inputs.requirements }}
+      - name: Install
+        env:
+          REQS: ${{ inputs.requirements }}
+        run: pip install -r "$REQS" pytest pytest-cov ruff pip-audit
+      - name: Lint (pyflakes, pycodestyle, bandit rules)
+        run: ruff check --select E,F,B,S --ignore S101 .
+      - name: Tests
+        env:
+          THRESHOLD: ${{ inputs.coverage-threshold }}
+        run: pytest --cov=. --cov-fail-under="$THRESHOLD"
+      - name: Dependency audit
+        env:
+          REQS: ${{ inputs.requirements }}
+        run: pip-audit -r "$REQS" --strict

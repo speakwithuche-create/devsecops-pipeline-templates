@@ -1,0 +1,49 @@
+# Tests the templates by running them against the sample apps in examples/.
+name: self-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint (also runs shellcheck on every run step)
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.3
+          ./actionlint -color
+
+  secrets:
+    uses: ./.github/workflows/secrets-scan.yml
+
+  go-example:
+    uses: ./.github/workflows/go.yml
+    with:
+      working-directory: examples/go-app
+      coverage-threshold: 80
+
+  python-example:
+    uses: ./.github/workflows/python.yml
+    with:
+      working-directory: examples/python-app
+      coverage-threshold: 80
+
+  container-example:
+    needs: [python-example]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+    uses: ./.github/workflows/container.yml
+    with:
+      context: examples/python-app
+      image-name: ${{ github.repository_owner }}/pipeline-templates-example
+      push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
