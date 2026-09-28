@@ -56,7 +56,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Vulnerability scan (SARIF for the Security tab)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (pinned by SHA after the March 2026 tag compromise)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.35.0 (pinned by SHA after the March 2026 tag compromise)
         with:
           image-ref: ${{ env.IMAGE }}:${{ github.sha }}
           format: sarif
@@ -69,7 +69,7 @@ jobs:
           category: trivy-${{ inputs.image-name }}
 
       - name: Vulnerability gate
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0 (pinned by SHA after the March 2026 tag compromise)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.35.0 (pinned by SHA after the March 2026 tag compromise)
         with:
           image-ref: ${{ env.IMAGE }}:${{ github.sha }}
           severity: ${{ inputs.severity }}
