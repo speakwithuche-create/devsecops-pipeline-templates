@@ -47,7 +47,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: Build (load locally for scanning)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ inputs.context }}
           load: true
@@ -95,7 +95,7 @@ jobs:
       - name: Push
         if: inputs.push
         id: push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ inputs.context }}
           push: true
