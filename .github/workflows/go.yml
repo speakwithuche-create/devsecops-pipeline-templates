@@ -8,6 +8,10 @@ on:
       working-directory:
         type: string
         default: "."
+      go-version:
+        description: Go version to build with. "stable" tracks the latest supported release, so standard library security fixes are picked up.
+        type: string
+        default: stable
       coverage-threshold:
         description: Minimum total statement coverage (percent)
         type: number
@@ -26,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: ${{ inputs.working-directory }}/go.mod
+          go-version: ${{ inputs.go-version }}
           cache-dependency-path: ${{ inputs.working-directory }}/go.sum
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -l .; echo "::error::files need gofmt"; exit 1; }
